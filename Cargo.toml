@@ -1,0 +1,16 @@
+[package]
+name = "ds2482"
+version = "0.1.0"
+authors = ["Bart Weber"]
+license = "MIT/Apache-2.0"
+edition = "2021"
+keywords = ["embedded", "one-wire", "embedded-hal-driver", "1-wire", "ds2482"]
+readme = "README.md"
+categories = ["embedded", "hardware-support", "no-std"]
+description = """
+A Rust implementation of the 1-Wire protocol for embedded-hal using the DS2482 I2C to 1-Wire bridge.
+"""
+
+[dependencies]
+embedded-hal = "0.2.7"
+one-wire-bus = { path = "../one-wire-bus" }
