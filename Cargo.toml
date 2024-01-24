@@ -1,5 +1,5 @@
 [package]
-name = "ds2482"
+name = "one-wire-ds2482"
 version = "0.1.0"
 authors = ["Bart Weber"]
 license = "MIT/Apache-2.0"

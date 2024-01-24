@@ -3,14 +3,6 @@
 version = 3
 
 [[package]]
-name = "ds2482"
-version = "0.1.0"
-dependencies = [
- "embedded-hal",
- "one-wire-bus",
-]
-
-[[package]]
 name = "embedded-hal"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -40,6 +32,14 @@ name = "one-wire-bus"
 version = "0.1.1"
 dependencies = [
  "embedded-hal",
+]
+
+[[package]]
+name = "one-wire-ds2482"
+version = "0.1.0"
+dependencies = [
+ "embedded-hal",
+ "one-wire-bus",
 ]
 
 [[package]]

@@ -4,9 +4,9 @@ pub type DS2482Result<T, E> = Result<T, DS2482Error<E>>;
 
 #[derive(Debug, Copy, Clone)]
 pub enum DS2482Error<E> {
-    DeviceResetFailed,
+    DeviceResetError,
     I2CCommunicationError(E),
-    WriteConfigFailed,
+    WriteConfigError,
 }
 
 impl<E> From<E> for DS2482Error<E> {
@@ -15,12 +15,13 @@ impl<E> From<E> for DS2482Error<E> {
     }
 }
 
-impl<E> From<DS2482Error<E>> for OneWireError {
-    fn from(err: DS2482Error<E>) -> OneWireError {
+impl<E> From<DS2482Error<E>> for OneWireError<E> {
+    fn from(err: DS2482Error<E>) -> Self {
         match err {
-            DS2482Error::DeviceResetFailed => OneWireError::BusError,
-            DS2482Error::I2CCommunicationError(_) => OneWireError::BusError,
-            DS2482Error::WriteConfigFailed => OneWireError::BusError,
+            DS2482Error::DeviceResetError => OneWireError::InitializationError,
+            DS2482Error::I2CCommunicationError(err) => OneWireError::CommunicationError(err),
+            DS2482Error::WriteConfigError => OneWireError::InitializationError,
         }
     }
 }
+
