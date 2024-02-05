@@ -1,27 +1,20 @@
-use one_wire_bus::OneWireError;
-
-pub type DS2482Result<T, E> = Result<T, DS2482Error<E>>;
+use one_wire_hal::error::ErrorKind;
 
 #[derive(Debug, Copy, Clone)]
-pub enum DS2482Error<E> {
+pub enum Error {
     DeviceResetError,
-    I2CCommunicationError(E),
+    I2CCommunicationError,
     WriteConfigError,
+    ShortDetected,
 }
 
-impl<E> From<E> for DS2482Error<E> {
-    fn from(err: E) -> DS2482Error<E> {
-        DS2482Error::I2CCommunicationError(err)
-    }
-}
-
-impl<E> From<DS2482Error<E>> for OneWireError<E> {
-    fn from(err: DS2482Error<E>) -> Self {
-        match err {
-            DS2482Error::DeviceResetError => OneWireError::InitializationError,
-            DS2482Error::I2CCommunicationError(err) => OneWireError::CommunicationError(err),
-            DS2482Error::WriteConfigError => OneWireError::InitializationError,
+impl one_wire_hal::error::Error for Error {
+    fn kind(&self) -> ErrorKind {
+        match self {
+            Error::DeviceResetError => ErrorKind::Other,
+            Error::I2CCommunicationError => ErrorKind::Other,
+            Error::WriteConfigError => ErrorKind::Other,
+            Error::ShortDetected => ErrorKind::Other,
         }
     }
 }
-

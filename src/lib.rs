@@ -1,11 +1,13 @@
 #![no_std]
 
-use embedded_hal::blocking::delay::DelayUs;
-use embedded_hal::blocking::i2c::{Read, Write, WriteRead};
-use one_wire_bus::{Address, OneWire, OneWireError, OneWireResult, Triplet};
-use one_wire_bus::device_search::DeviceSearch;
+use embedded_hal::delay::DelayNs;
+use embedded_hal::i2c::I2c;
+use one_wire_hal::address::Address;
+use one_wire_hal::device_search::DeviceSearch;
+use one_wire_hal::OneWire;
+use one_wire_hal::triplet::Triplet;
 
-use crate::error::{DS2482Error, DS2482Result};
+use crate::error::Error;
 
 pub mod error;
 
@@ -58,21 +60,24 @@ pub struct OneWireDS2482<I2C> {
     addr: u8,
 }
 
-impl<I2C, E> OneWireDS2482<I2C>
-    where I2C: Read<Error=E> + Write<Error=E> + WriteRead<Error=E>
-{
-    pub fn new(i2c: I2C, addr: u8) -> OneWireDS2482<I2C> {
-        OneWireDS2482 { i2c, addr }
+impl<I2C: I2c> one_wire_hal::error::ErrorType for OneWireDS2482<I2C> {
+    type Error = Error;
+}
+
+impl<I2C: I2c> OneWireDS2482<I2C> {
+    pub fn new(i2c: I2C, addr: u8) -> Self {
+        Self { i2c, addr }
     }
 
     /// Perform a device reset on the DS2482
     /// Should be called after power up or after a communication error
-    pub fn ds2482_device_reset(&mut self) -> DS2482Result<(), E> {
+    pub fn ds2482_device_reset(&mut self) -> Result<(), Error> {
         let mut rx: [u8; 1] = [0];
-        self.i2c.write_read(self.addr, &[COMMAND_DRST], &mut rx)?;
+        self.i2c.write_read(self.addr, &[COMMAND_DRST], &mut rx)
+            .map_err(|_| Error::I2CCommunicationError)?;
         let status = rx[0];
         if (status & STATUS_RST) == 0 {
-            return Err(DS2482Error::DeviceResetError);
+            return Err(Error::DeviceResetError);
         }
 
         Ok(())
@@ -85,16 +90,17 @@ impl<I2C, E> OneWireDS2482<I2C>
     /// SPU: strong pullup; 0 = disabled, 1 = enabled
     /// n/a: reserved; must be 0
     /// APU: active pullup; 0 = disabled, 1 = enabled
-    pub fn ds2482_write_config(&mut self, config: u8) -> DS2482Result<(), E> {
+    pub fn ds2482_write_config(&mut self, config: u8) -> Result<(), Error> {
         let config_byte: u8 = config | (!config << 4);
         let mut rx: [u8; 1] = [0];
 
-        self.i2c.write_read(self.addr, &[COMMAND_WCFG, config_byte], &mut rx)?;
+        self.i2c.write_read(self.addr, &[COMMAND_WCFG, config_byte], &mut rx)
+            .map_err(|_| Error::I2CCommunicationError)?;
 
         let read_config = rx[0];
         if config != read_config {
             self.ds2482_device_reset()?;
-            return Err(DS2482Error::WriteConfigError);
+            return Err(Error::WriteConfigError);
         }
 
         Ok(())
@@ -103,13 +109,13 @@ impl<I2C, E> OneWireDS2482<I2C>
     /// Read the status register consisting of 8 bits
     ///
     /// DIR TSB  SBR  RST  LL  SD  PPD  1WB
-    pub fn ds2482_read_status(&mut self) -> DS2482Result<u8, E> {
+    pub fn ds2482_read_status(&mut self) -> Result<u8, Error> {
         self.ds2482_set_read_pointer(POINTER_STATUS)?;
         self.ds2482_read_byte()
     }
 
     /// Read the data register
-    pub fn ds2482_read_data_register(&mut self) -> DS2482Result<u8, E> {
+    pub fn ds2482_read_data_register(&mut self) -> Result<u8, Error> {
         self.ds2482_set_read_pointer(POINTER_DATA)?;
         self.ds2482_read_byte()
     }
@@ -119,7 +125,7 @@ impl<I2C, E> OneWireDS2482<I2C>
     /// until the 1WB bit is cleared
     ///
     /// Returns the status register
-    fn ds2482_wait_on_busy(&mut self, delay: &mut dyn DelayUs<u16>) -> DS2482Result<u8, E> {
+    fn ds2482_wait_on_busy(&mut self, delay: &mut dyn DelayNs) -> Result<u8, Error> {
         let mut status = 0;
 
         let mut poll_count = 0;
@@ -136,29 +142,28 @@ impl<I2C, E> OneWireDS2482<I2C>
         Ok(status)
     }
 
-    fn ds2482_set_read_pointer(&mut self, read_pointer: u8) -> DS2482Result<(), E> {
-        self.i2c.write(self.addr, &[COMMAND_SRP, read_pointer])?;
+    fn ds2482_set_read_pointer(&mut self, read_pointer: u8) -> Result<(), Error> {
+        self.i2c.write(self.addr, &[COMMAND_SRP, read_pointer])
+            .map_err(|_| Error::I2CCommunicationError)?;
         Ok(())
     }
 
-    pub fn ds2482_read_byte(&mut self) -> DS2482Result<u8, E> {
+    pub fn ds2482_read_byte(&mut self) -> Result<u8, Error> {
         let mut rx: [u8; 1] = [0];
-        self.i2c.read(self.addr, &mut rx)?;
+        self.i2c.read(self.addr, &mut rx)
+            .map_err(|_| Error::I2CCommunicationError)?;
         Ok(rx[0])
     }
 
-    pub fn ds2482_write_bytes(&mut self, bytes: &[u8]) -> DS2482Result<(), E> {
-        self.i2c.write(self.addr, bytes)?;
+    pub fn ds2482_write_bytes(&mut self, bytes: &[u8]) -> Result<(), Error> {
+        self.i2c.write(self.addr, bytes)
+            .map_err(|_| Error::I2CCommunicationError)?;
         Ok(())
     }
 }
 
-impl<I2C, E> OneWire for OneWireDS2482<I2C>
-    where I2C: Read<Error=E> + Write<Error=E> + WriteRead<Error=E>
-{
-    type Error = OneWireError<E>;
-
-    fn reset(&mut self, delay: &mut impl DelayUs<u16>) -> OneWireResult<bool, E> {
+impl<I2C: I2c> OneWire for OneWireDS2482<I2C> {
+    fn reset(&mut self, delay: &mut impl DelayNs) -> Result<bool, Error> {
         self.ds2482_wait_on_busy(delay)?;
 
         // TODO: please implement
@@ -172,13 +177,13 @@ impl<I2C, E> OneWire for OneWireDS2482<I2C>
         let status = self.ds2482_wait_on_busy(delay)?;
 
         if (status & STATUS_SD) != 0 {
-            return Err(OneWireError::ShortDetected);
+            return Err(Error::ShortDetected);
         }
 
         Ok((status & STATUS_PPD) != 0)
     }
 
-    fn read_bit(&mut self, delay: &mut impl DelayUs<u16>) -> OneWireResult<bool, E> {
+    fn read_bit(&mut self, delay: &mut impl DelayNs) -> Result<bool, Error> {
         // Bit 7 is what matters and in this case we need it to be a 1
         // this will generate a read-data time slot
         let bit_byte = 0xFF;
@@ -189,26 +194,26 @@ impl<I2C, E> OneWire for OneWireDS2482<I2C>
         Ok((status & STATUS_SBR) != 0)
     }
 
-    fn read_byte(&mut self, delay: &mut impl DelayUs<u16>) -> OneWireResult<u8, E> {
+    fn read_byte(&mut self, delay: &mut impl DelayNs) -> Result<u8, Error> {
         self.ds2482_wait_on_busy(delay)?;
         self.ds2482_write_bytes(&[COMMAND_1WRB])?;
         self.ds2482_wait_on_busy(delay)?;
         Ok(self.ds2482_read_data_register()?)
     }
 
-    fn write_bit(&mut self, bit: bool, delay: &mut impl DelayUs<u16>) -> OneWireResult<(), E> {
+    fn write_bit(&mut self, bit: bool, delay: &mut impl DelayNs) -> Result<(), Error> {
         // set bit_byte by setting bit 7 to 1 or 0
         let bit_byte = if bit { 0xFF } else { 0x00 };
         self.ds2482_wait_on_busy(delay)?;
         Ok(self.ds2482_write_bytes(&[COMMAND_1WSB, bit_byte])?)
     }
 
-    fn write_byte(&mut self, value: u8, delay: &mut impl DelayUs<u16>) -> OneWireResult<(), E> {
+    fn write_byte(&mut self, value: u8, delay: &mut impl DelayNs) -> Result<(), Error> {
         self.ds2482_wait_on_busy(delay)?;
         Ok(self.ds2482_write_bytes(&[COMMAND_1WWB, value])?)
     }
 
-    fn triplet(&mut self, dir_bit: bool, delay: &mut impl DelayUs<u16>) -> OneWireResult<Triplet, E> {
+    fn triplet(&mut self, dir_bit: bool, delay: &mut impl DelayNs) -> Result<Triplet, Error> {
         let dir_byte = if dir_bit { 0xFF } else { 0x00 };
         self.ds2482_wait_on_busy(delay)?;
         self.ds2482_write_bytes(&[COMMAND_TRIPLET, dir_byte])?;
@@ -219,16 +224,7 @@ impl<I2C, E> OneWire for OneWireDS2482<I2C>
         Ok(Triplet::new(bit, complement_bit, direction_bit))
     }
 
-    fn devices<'a>(&'a mut self, delay: &'a mut impl DelayUs<u16>) -> impl Iterator<Item=Result<Address, Self::Error>> + 'a {
+    fn devices<'a>(&'a mut self, delay: &'a mut impl DelayNs) -> impl Iterator<Item=Result<Address, Self::Error>> + 'a {
         DeviceSearch::new(false, self, delay)
-    }
-}
-
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        todo!("Please implement tests")
     }
 }
