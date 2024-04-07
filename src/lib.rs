@@ -227,4 +227,8 @@ impl<I2C: I2c> OneWire for OneWireDS2482<I2C> {
     fn devices<'a>(&'a mut self, delay: &'a mut impl DelayNs) -> impl Iterator<Item=Result<Address, Self::Error>> + 'a {
         DeviceSearch::new(false, self, delay)
     }
+
+    fn alarming_devices<'a>(&'a mut self, delay: &'a mut impl DelayNs) -> impl Iterator<Item=Result<Address, Self::Error>> + 'a {
+        DeviceSearch::new(true, self, delay)
+    }
 }
