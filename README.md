@@ -5,7 +5,7 @@ It is an implementation of the `OneWire` trait from the [`one-wire-hal`](https:/
 crate.
 
 > [!NOTE]  
-> This project is a work in progress and might not yet ready for use.
+> This project is a work in progress and might not yet ready for use. This crate is not yet published on crates.io.
 
 <img src="assets/img.png" alt="img.png" width="200px">
 
@@ -21,9 +21,8 @@ Setup the one-wire bus with the DS2482 and search for devices:
 ```rust
 // setup one-wire bus
 let mut ds2482 = OneWireDS2482::new(i2c, 0x18);
-ds2482.ds2482_device_reset() ?;
-ds2482.ds2482_write_config(0b0001) ?;
-rprintln!("ds2482 configured");
+ds2482.ds2482_device_reset().unwrap();
+ds2482.ds2482_write_config(0b0001).unwrap();
 let mut one_wire = ds2482;
 
 // search for devices
@@ -35,4 +34,6 @@ let mut devices = one_wire.devices(delay);
 - [ ] Write tests for `OneWireDS2482`
 - [ ] Publish the crate
 - [ ] Add documentation
-- [ ] Add working examples for popular devices like the DS18B20
+- [x] Add working examples for popular devices like the DS18B20
+- [ ] Update `cortex-m` dev dependency as soon as it is compatible with `embedded-hal:1.0`
+- [ ] Add github actions for CI

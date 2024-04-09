@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Bart Weber"]
 license = "MIT/Apache-2.0"
 edition = "2021"
-keywords = ["embedded", "one-wire", "embedded-hal-driver", "1-wire", "ds2482"]
+keywords = ["embedded", "one-wire", "embedded-hal-driver", "ds2482"]
 readme = "README.md"
 categories = ["embedded", "hardware-support", "no-std"]
 description = """
@@ -13,4 +13,23 @@ A Rust implementation of the 1-Wire bus for embedded-hal aided by hardware: the 
 
 [dependencies]
 embedded-hal = "1.0.0"
+# one-wire-hal is not yet published on crates.io
+# it is available at https://github.com/bartweber/one-wire-hal
 one-wire-hal = { path = "../one-wire-hal" }
+
+
+[dev-dependencies]
+# rp-pico is not yet using a version of cortex-m that is compatible with embedded-hal 1.0
+rp-pico = { path = "../3rd-party/rp-hal-boards/boards/rp-pico" }
+# code changes to ds18b20 are not yet available on crates.io
+# it is available at https://github.com/bartweber/ds18b20
+ds18b20 = { path = "../ds18b20" }
+# the latest version of cortex-m is not yet compatible with embedded-hal 1.0
+# a pull request is merged, but not yet released
+# use the `master` branch until a new release is made
+cortex-m = { path = "../3rd-party/cortex-m/cortex-m" }
+cortex-m-rt = "0.7.3"
+panic-halt = "0.2.0"
+rtt-target = "0.5.0"
+# rp2040-hal is not yet using a version of cortex-m that is compatible with embedded-hal 1.0
+rp2040-hal = { path = "../3rd-party/rp-hal/rp2040-hal" }
