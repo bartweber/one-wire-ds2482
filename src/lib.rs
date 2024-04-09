@@ -125,7 +125,7 @@ impl<I2C: I2c> OneWireDS2482<I2C> {
     /// until the 1WB bit is cleared
     ///
     /// Returns the status register
-    fn ds2482_wait_on_busy(&mut self, delay: &mut dyn DelayNs) -> Result<u8, Error> {
+    fn ds2482_wait_on_busy(&mut self, delay: &mut impl DelayNs) -> Result<u8, Error> {
         let mut status = 0;
 
         let mut poll_count = 0;

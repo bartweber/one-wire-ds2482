@@ -24,7 +24,7 @@ let mut ds2482 = OneWireDS2482::new(i2c, 0x18);
 ds2482.ds2482_device_reset() ?;
 ds2482.ds2482_write_config(0b0001) ?;
 rprintln!("ds2482 configured");
-let mut one_wire: OneWire = ds2482;
+let mut one_wire = ds2482;
 
 // search for devices
 let mut devices = one_wire.devices(delay);
