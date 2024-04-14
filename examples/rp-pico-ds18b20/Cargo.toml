@@ -1,0 +1,25 @@
+[package]
+name = "rp-pico-ds18b20-example"
+version = "0.1.0"
+authors = ["Bart Weber"]
+license = "MIT/Apache-2.0"
+edition = "2021"
+
+[dependencies]
+embedded-hal = "1.0.0"
+# one-wire-hal is not yet published on crates.io
+one-wire-hal = { git = "https://github.com/bartweber/one-wire-hal" }
+one-wire-ds2482 = { path = "../.." }
+# rp-pico is not yet using a version of cortex-m that is compatible with embedded-hal 1.0
+rp-pico = { git = "https://github.com/bartweber/rp-hal-boards" }
+# version of ds18b20 that is compatible with one-wire-hal is not yet available on crates.io
+ds18b20 = { git = "https://github.com/bartweber/ds18b20" }
+# the latest version of cortex-m is not yet compatible with embedded-hal 1.0
+# a pull request is merged, but not yet released
+# use the `master` branch until a new release is made
+cortex-m = { git = "https://github.com/rust-embedded/cortex-m" }
+cortex-m-rt = "0.7.3"
+panic-halt = "0.2.0"
+rtt-target = "0.5.0"
+# rp2040-hal is not yet using a version of cortex-m that is compatible with embedded-hal 1.0
+rp2040-hal = { git = "https://github.com/bartweber/rp-hal" }

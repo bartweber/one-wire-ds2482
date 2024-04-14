@@ -34,5 +34,6 @@ Connect the DS18B20 temperature sensor to the Raspberry Pi Pico as shown in the 
 Use the following command to run the example:
 
 ```bash
-cargo run --example pico-ds18b20
+# from the example/rp-pico-ds18b20 directory
+cargo run
 ```
