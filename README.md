@@ -37,3 +37,4 @@ let mut devices = one_wire.devices(delay);
 - [x] Add working examples for popular devices like the DS18B20
 - [ ] Update `cortex-m` dev dependency as soon as it is compatible with `embedded-hal:1.0`
 - [ ] Add github actions for CI
+- [ ] Add `async` feature
